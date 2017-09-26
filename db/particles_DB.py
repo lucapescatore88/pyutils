@@ -1,5 +1,4 @@
 import os, sys
-print sys.path
 
 dbfile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ParticleTable.txt')
 lines = open(dbfile).readlines()
