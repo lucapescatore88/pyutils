@@ -1,6 +1,5 @@
 import os, sys
-print sys.path
-import pyutils
+#import pyutils
 from pyutils import loc
 
 dbfile = loc.LHCB+"/ParticleTable.txt"
