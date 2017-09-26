@@ -6,6 +6,18 @@ import string
 from ROOT import *
 
 class PartialFormatter(string.Formatter):
+
+    '''
+    You can use this object fo fill templates. On top of the normal format() it also deals with absent values
+
+    Here an example
+
+    from utils.formatter import PartialFormatter as Formatter
+    fmt = Formatter()
+    table = fmt.format(open("table_template.txt").read(),**some_dictionary)
+    '''
+    
+    
     def __init__(self, missing='--', bad_fmt='!!'):
         self.missing, self.bad_fmt=missing, bad_fmt
 
@@ -26,27 +38,5 @@ class PartialFormatter(string.Formatter):
             if self.bad_fmt is not None: return self.bad_fmt   
             else: raise
 
-
-
-
-def divide(num, numE, den, denE) :
-    ratio  = 0
-    ratioE = 0
-    
-    if (den != 0.) :
-        ratio  = num / den
-        ratioE = ratio * TMath.Sqrt(TMath.Power(numE / num, 2) + TMath.Power(denE / den, 2))
-  
-    return ratio, ratioE
-
-def multiply(num, numE, den, denE) :
-    prod  = 0
-    prodE = 0
-    
-    if (den != 0.) : 
-        prod  = num * den
-        prodE = prod * TMath.Sqrt(TMath.Power(numE / num, 2) + TMath.Power(denE / den, 2))
-  
-    return prod, prodE
 
 

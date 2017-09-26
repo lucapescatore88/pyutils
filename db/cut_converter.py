@@ -23,7 +23,7 @@ class CutConverter :
             poseq = l.index("=")+1
             cut = l[poseq:]
             cut = cut.replace(";","").replace("\n","")
-	    cut = cut.replace("&&"," && ").replace("||"," || ")
+	        cut = cut.replace("&&"," && ").replace("||"," || ")
 
             split = l.split()
             namepos = split.index("TCut") + 1

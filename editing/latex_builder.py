@@ -24,7 +24,22 @@ def insert_line_before(ifile, search, text, shift = 0) :
     f.close()
 
 
-class latex_doc :
+class LatexDoc :
+    
+    '''
+    You can use this object to build latex documents compile them. Here an example
+
+    from utils.latex_builder import LatexDoc
+
+    latex = latex_doc("output.tex")
+    latex.set_title("My cool title")
+    latex.add_to_preamble(loc.LATEX+"/preamble.tex") # Standad LHCb preamble provided
+    latex.add_to_preamble(loc.LATEX+"/lhcb-symbols-def.tex") # Standad LHCb symbols provided
+    latex.insert_line("Inserts some explanation: main text of the latex")
+    latex.insert_figure(glob.glob("*.pdf"),ninrow=2)
+    latex.insert_tabular(some_string,"Some nice caption")
+    latex.close_and_compile()
+    '''
 
     def __init__(self, title = "", layout = "v") :
         

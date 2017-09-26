@@ -6,7 +6,38 @@ import math
 import uncertainties as unc
 
 class Value(unc.core.Variable) :
+    '''
+    This implements a number with uncertainty. It is based on ufloat so many operations are supported.
+
+    Features available also in ufloat:
+
+    * many operations overloaded
+    * representation in exp notation
+    * display in latex format
+    * control on the precision of the numbers
+    * automatic detection of the significant digits
+
+    Added features wrt the normal ufloat:
+
+    * you can add a unit
+    * you can display the number with a speficic scale
+    * you can easily add to the code a custom representation
+
+    Here an example:
     
+    from utils.value import Value
+    a = Value(3000,10,'MeV')
+    b = Value(4000,40,'MeV')
+    c = a + b
+    7000.0 +/- 50.0 MeV
+    c.change_scale(-3)
+    (7000000.0 +/- 50000.0) x 10^-3 MeV
+    c.change_unit(3,'GeV')
+    (7000.0 +/- 50.0) GeV
+    d = a / b
+    0.750 +/- 0.008
+    '''
+
     def __init__(self,val = 0,err = 0,unit=None, scale = 0):
         unc.core.Variable.__init__(self,val,err)
         self.scale = scale

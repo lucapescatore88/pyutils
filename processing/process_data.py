@@ -2,12 +2,10 @@ from ROOT import *
 from argparse import ArgumentParser
 from array import array
 import os, sys, re, pickle
-from Lb2LemuEnv import loc
-from utils.utils import loopTrees
+from utils import loopTrees
 import subprocess as sb
 import importlib
 from glob import glob
-from get_data import *
 
 parser = ArgumentParser()
 parser.add_argument("-m","--maxev",   default=1e14,type=float)
@@ -142,10 +140,10 @@ else :
             pickle.dump(args,open(curdir+'/opts.pkl','w'))
             runf = open(curdir+'/run.sh','w')
             if args.cuts[0]==None : 
-                runf.write("python "+loc.PYTHON+"utils/process_single_file.py -f {filename} -w {worker} {wparam1} {wparam2} -c {cutter}  --opts {options}".format(
+                runf.write("python "+loc.PROCESSING+"/process_single_file.py -f {filename} -w {worker} {wparam1} {wparam2} -c {cutter}  --opts {options}".format(
                     filename = f, worker = args.worker[0], wparam1 = args.worker[1], wparam2 = args.worker[2] , cutter = args.cuts[0] , options = curdir+'/opts.pkl' ))
             else :
-                runf.write("python "+loc.PYTHON+"utils/process_single_file.py -f {filename} -w {worker} {wparam1} {wparam2} -c {cutter} {cparam}  --opts {options}".format(
+                runf.write("python "+loc.PROCESSING+"/process_single_file.py -f {filename} -w {worker} {wparam1} {wparam2} -c {cutter} {cparam}  --opts {options}".format(
                     filename = f, worker = args.worker[0], wparam1 = args.worker[1], wparam2 = args.worker[2] , cutter = args.cuts[0], cparam = args.cuts[1] , options = curdir+'/opts.pkl' ))
             runf.close()
             cmd = "bsub -R 'pool>30000' -o {dir}/out -e {dir}/err -q {queue} -J {jname} < {dir}/run.sh ".format(
