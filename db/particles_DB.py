@@ -1,9 +1,7 @@
 import os, sys
 print sys.path
-import pyutils
-from pyutils import loc
 
-dbfile = loc.LHCB+"/ParticleTable.txt"
+dbfile = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ParticleTable.txt')
 lines = open(dbfile).readlines()
 
 class Particle :
