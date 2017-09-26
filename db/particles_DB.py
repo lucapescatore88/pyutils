@@ -1,5 +1,7 @@
 import os, sys
-from Lb2LemuEnv import loc
+print sys.path
+import pyutils
+from pyutils import loc
 
 dbfile = loc.LHCB+"/ParticleTable.txt"
 lines = open(dbfile).readlines()
