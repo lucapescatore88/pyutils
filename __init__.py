@@ -1,15 +1,12 @@
-import processing
-import numbers
-import db
-import editing
-import plotting
-#from LHCb import LHCbStyle
-
 import os, sys, glob
 
 class loc : pass
 
-loc.ROOT = os.getenv('PYUTILSROOT')
+root_dir = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(root_dir)
+sys.path.append(os.path.join(root_dir,'..'))
+
+loc.ROOT = root_dir
 for d in glob.glob(loc.ROOT+'/*') :
     name = os.path.basename(d)
     if '.' in name : continue
@@ -17,3 +14,10 @@ for d in glob.glob(loc.ROOT+'/*') :
 loc.LATEX = loc.LHCB+'/latex'
 
 
+# Import submodules
+import processing
+import numbers
+import db
+import editing
+import plotting
+#from LHCb import LHCbStyle

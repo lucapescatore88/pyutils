@@ -4,7 +4,7 @@ import ROOT as r
 from random import random
 import array
 import collections
-from MultiPlot import MultiPlot
+from multi_plot import MultiPlot
 
 def getHisto(tree, name, expr=None, region=None, nBins = None, cut='', title = None, opts= '', tree_cut='', tree_weight='',evtMax=1000000000, bins_limits=None, removeErrors=False):
     '''
@@ -68,7 +68,7 @@ def getHisto(tree, name, expr=None, region=None, nBins = None, cut='', title = N
 
 
 
-def getHistoRegion(*args, **kargs):
+def _getHistoRegion(*args, **kargs):
     '''
     Return the range of an histograms by plotting it and getting the position of the first and the last bin;
     all the arguments are passed to getHisto
@@ -193,7 +193,7 @@ class CompareTreeVars:
                     tree_cut = self.trees_cuts.get(label,'')
                     tree_weight = self.trees_weights.get(label,'')
                     tree_evtMax = self.trees_maxEvts.get(label, 1000000000)
-                    region = getHistoRegion(tree, name = label+'_'+name, tree_cut=tree_cut, tree_weight=tree_weight, evtMax = tree_evtMax, removeErrors= self.removeErrors[label], **infos)
+                    region = _getHistoRegion(tree, name = label+'_'+name, tree_cut=tree_cut, tree_weight=tree_weight, evtMax = tree_evtMax, removeErrors= self.removeErrors[label], **infos)
                     mins.append(region[0])
                     maxs.append(region[1])
                 if _region == 'min':
