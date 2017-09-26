@@ -1,6 +1,7 @@
 ## Define root variable
 export PYUTILSROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-export PYTHONPATH=$PYUTILSROOT:$PYTHONPATH
+export PYUTILSMOM="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
+export PYTHONPATH=$PYUTILSMOM:$PYTHONPATH
 
 # Locations
 
