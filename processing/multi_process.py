@@ -2,7 +2,7 @@
 
 import subprocess, shlex, logging, os, select, threading, logging
 
-def call(popenargs, logger, stdout_log_level=logging.DEBUG, stderr_log_level=logging.ERROR, **kwargs):
+def _call(popenargs, logger, stdout_log_level=logging.DEBUG, stderr_log_level=logging.ERROR, **kwargs):
     """
     Variant of subprocess.call that accepts a logger instead of stdout/stderr,
     and logs stdout messages via logger.debug and stderr messages via
@@ -35,7 +35,7 @@ def runCommand(command, logger=None):
     interpet directly command with shell (possibly dangerous) 
     '''
     if logger:
-        call(command, logger, shell=True)
+        _call(command, logger, shell=True)
     else:
         FNULL = open(os.devnull, 'w')
         subprocess.call(command, shell=True)#, stdout=FNULL, stderr=subprocess.STDOUT)

@@ -4,11 +4,11 @@ from math import sqrt
 import pickle, os
 from uncertainties import ufloat
 try:
-    from pyUtils import roundPair
+    from pyutils.nums import roundPair
 except ImportError:
     import sys
     sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),'../..'))
-    from pyUtils import roundPair
+    from pyutils.nums import roundPair
 
 class Efficiency:
     '''
