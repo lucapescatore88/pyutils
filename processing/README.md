@@ -5,7 +5,8 @@ Running ```python submit.py -h``` will give you a fill set of options.
 
 Exaple command:
 
-```python submit.py -d main_job_folder -n subjob_name_name 'Your command as you would send it in the shell' -fi [List or files to copy over]
+```
+python submit.py -d main_job_folder -n subjob_name_name "Your command as you would send it in the shell" -fi [List or files to copy over]
 ```
 
 Adding a ```--local``` option makes it run in local. Runs in batch my default.
