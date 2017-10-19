@@ -21,13 +21,63 @@ except ImportError:
     from pyUtils.Efficiencies import Efficiency
     from pyUtils.MultiCanvas import MultiCanvas
 
+def _getRec(coso, variables=None, cut='', **kwargs):
+    '''
+    Take a ROOT tree, numpy recarray or pandas dataframe or return a numpy recarray
+    if coso is a ROOT tree; kargs is passed to root_numpy tree2array
+    '''
+    if isinstance(coso, np.ndarray):
+        if cut:
+            coso = pd.DataFrame(coso).query(cut).to_records()
+        if variables:
+            return coso[variables]
+        return coso
+    elif isinstance(coso, pd.DataFrame):
+        ret_str = 'coso{0}{1}.to_records()'.format(
+                '[{0}]'.format(variables) if variables else '',
+                '.query("{0}")'.format(cut) if cut else '')
+        return eval(ret_str)
+    elif isinstance(coso, r.TTree):
+        if variables:
+            kwargs['branches'] = variables
+        if cut:
+            kwargs['selection'] = cut
+        return tree2array(coso, **kwargs).view(np.recarray)
+    else:
+        raise TypeError('Input must be a ROOT tree or a numpy recarray or a pandas dataframe, not a {0}'.format(type(coso)))
+
+
+def _getDF(coso, variables=None, cut='', *args, **kwargs):
+    '''
+    Take a ROOT tree, numpy recarray or pandas dataframe or return a pandas DataFrame
+    if coso is a ROOT tree; kargs is passed to root_numpy tree2array
+    '''
+    if isinstance(coso, pd.DataFrame):
+        ret_str = 'coso{0}{1}'.format(
+            '[{0}]'.format(variables) if variables else '',
+            '.query("{0}")'.format(cut) if cut else '')
+        return eval(ret_str)
+    elif isinstance(coso, np.ndarray):
+        ret_str = 'pd.DataFrame(coso){0}{1}'.format(
+            '[{0}]'.format(variables) if variables else '',
+            '.query("{0}")'.format(cut) if cut else '')
+        return eval(ret_str)
+    elif isinstance(coso, r.TTree):
+        if variables:
+            kwargs['branches'] = variables
+        if cut:
+            kwargs['selection'] = cut
+        return pd.DataFrame(tree2array(coso, *args, **kwargs).view(np.recarray))
+    else:
+        raise TypeError('Input must be a ROOT tree or a numpy recarray or a pandas dataframe, not a {0}'.format(type(coso)))
+
 
 class NTable:
     '''
     n-D histo that can contain the distributions of num_gen, num_sel, effs ...
     '''
-    
-    def __init__(self, variables, tree = None, nBins=None,
+
+    def __init__(self, variables, tree = None, histo = None, nBins=None,
                  ranges=None,
                  weights_var = None, cut=None, edges=None):
         if isinstance(variables, str):
@@ -53,10 +103,21 @@ class NTable:
             nBins = [len(i)-1 for i in edges]
             edges = [np.array(i) for i in edges]
 
-        if tree:
-            self.readTree(tree, edges)
+        self.edges = edges
+
+        if histo is not None and tree is not None:
+            assert IOErro('Cannot have tree and histo at the same time')
+
+
+        if histo is not None:
+            self.readHisto(tree, self.variables) # N.B. will rewrite edges
+        elif tree is not None:
+            self.readTree(tree, self.edges)
         else:
-            self.histo, self.edges = unumpy.uarray(np.zeros(nBins), np.zeros(nBins)), edges
+            self.histo= unumpy.uarray(np.zeros(nBins), np.zeros(nBins))
+
+        # To return for a whole vector the content to the correspondin bins
+        self._call_vect = np.vectorize(self.__call__)
 
     @property
     def val(self):
@@ -69,51 +130,88 @@ class NTable:
     @property
     def rel_err(self):
         return self.err/self.val
-            
 
-    def readTree(self, tree, nBins=3, ranges=None, cut=None, weights_var=None, weights_array=None):
+
+    def readTree(self, tree, edges, cut=None, weights_var=None, weights_array=None):
         '''
+        tree can be a ROOT tree, numpy recarray or pandas dataframe or return a pandas DataFrame
         weights_array is a numpy array with the weights (assumed to be in the same order as in the tree)
         '''
         if cut == None: cut = self.cut
         if weights_var == None: weights_var = self.weights_var
         if weights_var or weights_array:
-            rec = tree2array(tree, self.variables+[weights_var], selection=cut).view(np.recarray)
-            df = pd.DataFrame(rec)
+            df = _getDF(tree, variables=self.variables, cut=cut)
             if weights_var:
                 df['w'] = df[weights_var]
             elif weights_array:
                 df['w'] = weights_array
             df['w2'] = df['w']*df['w']
             df2 = df[self.variables]
-            hh = np.histogramdd(df2.as_matrix(), bins=nBins, range=ranges, weights=df['w'])
-            hh_sumw2 = np.histogramdd(df2.as_matrix(), bins=nBins, range=ranges, weights=df['w2'])
+            hh = np.histogramdd(df2.as_matrix(), bins=edges, weights=df['w'])
+            hh_sumw2 = np.histogramdd(df2.as_matrix(), bins=edges, weights=df['w2'])
             self.edges = hh[1]
             self.histo = unumpy.uarray(hh[0], np.sqrt(hh_sumw2[0]))
         else:
-            rec = tree2array(tree, self.variables, selection=cut).view(np.recarray)
-            df = pd.DataFrame(rec)
-            hh = np.histogramdd(df.as_matrix(), bins=nBins, range=ranges)
+            df = _getDF(tree, variables=self.variables, cut=cut)
+            hh = np.histogramdd(df.as_matrix(), bins=edges)
             hist, self.edges = hh
             self.histo = unumpy.uarray(hist[:], np.sqrt(hist))
-       
 
-        
+
+
+    def readHisto(self, histo, variables):
+        '''
+        Convert a histo (THn with n = 1,2,3) to a nTable, variables is the names of the variables [x, y, z]
+        '''
+        assert histo.GetDimension() == len(variables) # number of variables must be same dimension of histo
+        assert histo.GetDimension() in [1, 2, 3] # nuber of dimension can be 1, 2, 3
+
+        edges = []
+        edges.append(np.zeros(histo.GetNbinsX()+1))
+        histo.GetXaxis().GetLowEdge(edges[0])
+        edges[0][-1] = histo.GetXaxis().GetBinUpEdge(histo.GetNbinsX())
+        if histo.GetDimension() > 1:
+            edges.append(np.zeros(histo.GetNbinsY()+1))
+            histo.GetYaxis().GetLowEdge(edges[1])
+            edges[1][-1] = histo.GetYaxis().GetBinUpEdge(histo.GetNbinsY())
+        if histo.GetDimension() > 2:
+            edges.append(np.zeros(histo.GetNbinsZ()+1))
+            histo.GetZaxis().GetLowEdge(edges[2])
+            edges[2][-1] = histo.GetZaxis().GetBinUpEdge(histo.GetNbinsZ())
+
+        self.variables=variables
+        self.edges = edges
+
+        if histo.GetDimension() == 1:
+            for i in range(histo.GetNbinsX()):
+                self.histo[i].n = ufloat(histo.GetBinContent(i+1), histo.GetBinError(i+1))
+        if histo.GetDimension() == 2:
+            for i in range(histo.GetNbinsX()):
+                for j in range(histo.GetNbinsY()):
+                    self.histo[i][j] = ufloat(histo.GetBinContent(i+1, j+1), histo.GetBinError(i+1, j+1))
+        if histo.GetDimension() == 3:
+            for i in range(histo.GetNbinsX()):
+                for j in range(histo.GetNbinsY()):
+                    for k in range(histo.GetNbinsZ()):
+                        self.histo[i][j][k] = ufloat(histo.GetBinContent(i+1, j+1, k+1), histo.GetBinError(i+1, j+1, k+1))
+
+
+
     def __repr__(self):
         if not hasattr(self, 'histo'):
             return 'Empty {0}'.format(self.__class__.__name__)
         return '{0} with {1} dimensions'.format(self.__class__.__name__, self.histo.shape)
 
-    
+
     def __str__(self):
         if not hasattr(self, 'histo'):
             return 'Empty {0}'.format(self.__class__.__name__)
         return '''{0} with {1} dimensions
-        
+
             variables: {2},
-        
+
             edges: {3},
-        
+
             values:
             {4}'''.format(self.__class__.__name__, self.histo.shape, self.variables, self.edges, self.histo)
 
@@ -131,7 +229,7 @@ class NTable:
                 exec 'res.{0} = copy.deepcopy(self.{0})'.format(coso)
         res.__class__ = self.__class__ # like this I cast the base class to the derived class
         return res
-    
+
     def __add__(self, other):
         assert np.array([(i==j).all() for i, j in zip(self.edges, other.edges)]).all()
         res = self.copy()
@@ -180,10 +278,10 @@ class NTable:
             res.histo = unumpy.uarray(val,err)
         res.removeNan(0)
         return res
-    
+
     __truediv__ = __div__
     __rtruediv__ = __rdiv__
-    
+
 
     def sqrt(self):
         res = self.copy()
@@ -192,10 +290,46 @@ class NTable:
         res.histo = unumpy.sqrt(self.histo)
         return res
 
+    def __getitem__(self, *args):
+        return self.histo.__getitem__(*args)
+
+
+
+    def __call__(self, evt):
+        '''
+        evt can be a list-like (then variable ordering is assumed) or a dictionary-like
+        If overflow or underflow return 0
+        '''
+        assert len(evt) >= len(self.variables)
+        for key in self.variables:
+            try:
+                ll = [evt[key] for key in self.variables]
+            except TypeError:
+                ll = evt
+        # N.B. -1 needed to have bins start from 0 and not from 1
+        which_bins = [np.digitize(i, edg).item()-1 for i, edg in zip(ll, self.edges)]
+        if -1 in which_bins: # Against underflow
+            return 0
+        try:
+            return self[tuple(which_bins)]
+        except IndexError: # Against overflow
+            return 0
+
+
+
+
+
+
     def saveToFile(self, fileName = "nTable.pkl"):
+        '''
+        Use pickle to save to file
+        '''
         pickle.dump(self, open( fileName, "wb" ))
 
     def loadFromFile(self,fileName = "nTable.pkl"):
+        '''
+        Use pickle to load from to file
+        '''
         return pickle.load( open( fileName, "rb" ) )
 
 
@@ -233,7 +367,7 @@ class NTable:
         self.histo =  unumpy.uarray(val,err)
         return self
 
-    
+
     def project(self,vars2keep=[]):
         '''
         return a nTable of lower dimension projecting out (i.e. summing over)
@@ -254,7 +388,38 @@ class NTable:
             res = res.histo
         return res
 
-    def Draw(self, vars2keep=None, opts='', isSumw2=False, **kargs):
+
+    def keepOnlyBin(self,var, bin):
+        '''
+        return a nTable of lower dimension removing the variable "var" and leaving
+        in all the bins of the other variables the values corresponding of "var" in the bin "bin"
+        Useful if the variable "var" denote some cathegory and what to get a table
+        for only the events in a specific cathegory
+        var can be the strings with the name of the variable or its index
+        '''
+        if unicode(var).isnumeric():
+            var = self.variables[int(var)]
+        res = NTable(variables=[i for i in self.variables if i != var])
+        res.edges = [self.edges[i] for i in range(len(self.edges)) if self.variables[i] != var]
+        res.histo = self.histo[[(bin if i==var else slice(None)) for i in self.variables]]
+        return res
+
+    def deleteBin(self,var, bin):
+        '''
+        return a nTable of lower dimension removing the bin 'bin' of the variable "var"
+        Useful if the variable "var" denote some cathegory and what to get a table
+        for all the events except those in a specific cathegory
+        var can be the strings with the name of the variable or its index
+        '''
+        if unicode(var).isnumeric():
+            var = self.variables[int(var)]
+        res = NTable(variables=[i for i in self.variables if i != var])
+        res.edges = [self.edges[i] for i in range(len(self.edges)) if self.variables[i] != var]
+        res.histo = np.delete(self.histo, bin, self.variables.index(var))
+        return res
+
+
+    def Draw(self, vars2keep=None, opts='', isSumw2=False, title = '', **kargs):
         if vars2keep == None:
             vars2keep = self.variables
         if isinstance(vars2keep,str):
@@ -262,9 +427,12 @@ class NTable:
         if len(vars2keep) > 3:
             raise ValueError('For now it works only for less than 4 dimensions')
         proj = self.project(vars2keep, **kargs)
-        self.h_draw = nTable2histo(proj, isSumw2=isSumw2)
+        self.h_draw = proj.getHisto(isSumw2=isSumw2)
+        if title:
+            self.h_draw.SetTitle(title)
         self.h_draw.Draw(opts)
         return self.h_draw
+
 
     def matrixPlot(self, isSumw2=True, **kargs):
         ndim = self.histo.ndim
@@ -278,92 +446,66 @@ class NTable:
                     drawables[i].append((self.Draw([i,j], **kargs), 'colz'+('text e' if isSumw2 else '')))
         return MultiCanvas(drawables)
 
-        
 
-        
-def nTable2histo(nTable, title='', name='', latex_names={}, isSumw2=False):
-    '''
-    Convert nTable to the appropriate THnD depending of the dimension
-    useful mainly for plotting porposes
-    '''
-    if not name:
-        name = str(hash(nTable))
-    if not title:
-        title = 'histo'
-        for var in nTable.variables:
-            title += ';'+latex_names.get(var, var)
-    if nTable.histo.ndim == 1:
-        h = r.TH1D(name, title, len(nTable.edges[0])-1, nTable.edges[0])
-        for i in range(h.GetNbinsX()):
-            h.SetBinContent(i+1, nTable.histo[i].n)
-            if isSumw2:
-                h.SetBinError(i+1, nTable.histo[i].s)
-    elif nTable.histo.ndim == 2:
-        h = r.TH2D(name, title, len(nTable.edges[0])-1, nTable.edges[0], len(nTable.edges[1])-1, nTable.edges[1] )
-        for i in range(h.GetNbinsX()):
-            for j in range(h.GetNbinsY()):
-                h.SetBinContent(i+1, j+1, nTable.histo[i,j].n)
+    def getHisto(self, title='', name='', latex_names={}, isSumw2=False):
+        '''
+        Convert nTable to the appropriate THnD depending of the dimension
+        useful mainly for plotting porposes
+        '''
+        if not name:
+            name = str(hash(self))
+        if not title:
+            title = 'histo'
+            for var in self.variables:
+                title += ';'+latex_names.get(var, var)
+        if self.histo.ndim == 1:
+            h = r.TH1D(name, title, len(self.edges[0])-1, self.edges[0])
+            for i in range(h.GetNbinsX()):
+                h.SetBinContent(i+1, self.histo[i].n)
                 if isSumw2:
-                    h.SetBinError(i+1, j+1, nTable.histo[i,j].s)
-    elif nTable.histo.ndim == 3:
-        h = r.TH3D(name, title, len(nTable.edges[0])-1, nTable.edges[0], len(nTable.edges[1])-1, nTable.edges[1], len(nTable.edges[2])-1, nTable.edges[2] )
-        for i in range(h.GetNbinsX()):
-            for j in range(h.GetNbinsY()):
-                for k in range(h.GetNbinsZ()):
-                    h.SetBinContent(i+1, j+1, k+1, nTable.histo[i, j, k].n)
+                    h.SetBinError(i+1, self.histo[i].s)
+        elif self.histo.ndim == 2:
+            h = r.TH2D(name, title, len(self.edges[0])-1, self.edges[0], len(self.edges[1])-1, self.edges[1] )
+            for i in range(h.GetNbinsX()):
+                for j in range(h.GetNbinsY()):
+                    h.SetBinContent(i+1, j+1, self.histo[i,j].n)
                     if isSumw2:
-                        h.SetBinError(i+1,j+1, k+1, nTable.histo[i, j, k].s)
-    else:
-        
-        h = r.THnD(name, title, nTable.histo.ndim,
-                   array.array('i', [len(i)-1 for i in nTable.edges]),
-                   array.array('d', [i[0] for i in nTable.edges]),
-                    array.array('d', [i[-1] for i in nTable.edges])
-                    )
-        nBins = [h.GetAxis(i).GetNbins() for i in range(h.GetNdimensions())]
-        for iters in itertools.product(*[range(i) for i in nBins]):
-            h.SetBinContent(array.array('i', [i+1 for i in iters]), nTable.histo[tuple(iters)].n)
-            if isSumw2:
-                h.SetBinError(array.array('i', [i+1 for i in iters]), nTable.histo[tuple(iters)].s)
-    return h
+                        h.SetBinError(i+1, j+1, self.histo[i,j].s)
+        elif self.histo.ndim == 3:
+            h = r.TH3D(name, title, len(self.edges[0])-1, self.edges[0], len(self.edges[1])-1, self.edges[1], len(self.edges[2])-1, self.edges[2] )
+            for i in range(h.GetNbinsX()):
+                for j in range(h.GetNbinsY()):
+                    for k in range(h.GetNbinsZ()):
+                        h.SetBinContent(i+1, j+1, k+1, self.histo[i, j, k].n)
+                        if isSumw2:
+                            h.SetBinError(i+1,j+1, k+1, self.histo[i, j, k].s)
+        else:
 
-def histo2nTable(histo, variables):
-    '''
-    Convert a histo (THn with n = 1,2,3) to a nTable, variables is the names of the variables [x, y, z]
-    '''
-    assert histo.GetDimension() == len(variables) # number of variables must be same dimension of histo
-    assert histo.GetDimension() in [1, 2, 3] # nuber of dimension can be 1, 2, 3
+            h = r.THnD(name, title, self.histo.ndim,
+                       array.array('i', [len(i)-1 for i in self.edges]),
+                       array.array('d', [i[0] for i in self.edges]),
+                        array.array('d', [i[-1] for i in self.edges])
+                        )
+            nBins = [h.GetAxis(i).GetNbins() for i in range(h.GetNdimensions())]
+            for iters in itertools.product(*[range(i) for i in nBins]):
+                h.SetBinContent(array.array('i', [i+1 for i in iters]), self.histo[tuple(iters)].n)
+                if isSumw2:
+                    h.SetBinError(array.array('i', [i+1 for i in iters]), self.histo[tuple(iters)].s)
+        return h
 
-    edges = []
-    edges.append(np.zeros(histo.GetNbinsX()+1))
-    histo.GetXaxis().GetLowEdge(edges[0])
-    edges[0][-1] = histo.GetXaxis().GetBinUpEdge(histo.GetNbinsX())
-    if histo.GetDimension() > 1:
-        edges.append(np.zeros(histo.GetNbinsY()+1))
-        histo.GetYaxis().GetLowEdge(edges[1])
-        edges[1][-1] = histo.GetYaxis().GetBinUpEdge(histo.GetNbinsY())
-    if histo.GetDimension() > 2:
-        edges.append(np.zeros(histo.GetNbinsZ()+1))
-        histo.GetZaxis().GetLowEdge(edges[2])
-        edges[2][-1] = histo.GetZaxis().GetBinUpEdge(histo.GetNbinsZ())
-    
-    nt = NTable(variables=variables, edges = edges)
 
-    if histo.GetDimension() == 1:
-        for i in range(histo.GetNbinsX()):
-            nt.histo[i].n = ufloat(histo.GetBinContent(i+1), histo.GetBinError(i+1))
-    if histo.GetDimension() == 2:
-        for i in range(histo.GetNbinsX()):
-            for j in range(histo.GetNbinsY()):
-                nt.histo[i][j] = ufloat(histo.GetBinContent(i+1, j+1), histo.GetBinError(i+1, j+1))
-    if histo.GetDimension() == 3:
-        for i in range(histo.GetNbinsX()):
-            for j in range(histo.GetNbinsY()):
-                for k in range(histo.GetNbinsZ()):
-                    nt.histo[i][j][k] = ufloat(histo.GetBinContent(i+1, j+1, k+1), histo.GetBinError(i+1, j+1, k+1))
+    def getWeights(self, tree, errors=True):
+        '''
+        get as an imput a ROOT tree, numpy recarray or pandas dataframe or return a pandas DataFrame
+        and return a numpy array with, for each event, the content of the corresponding bin.
+        if error is true return an ufloat else just a number
+        '''
+        rec = _getRec(tree)
+        if errors:
+            return self._call_vect(rec[self.variables])
+        else:
+            return unumpy.nominal_values(self._call_vect(rec[self.variables]))
 
-    return nt
-    
 
 class EffTable(NTable):
     '''
@@ -376,7 +518,7 @@ class EffTable(NTable):
         if gen!=None and sel!=None:
 
             assert np.array([(i==j).all() for i, j in zip(gen.edges, sel.edges)]).all()
-            
+
             self.variables = sel.variables
             self.edges = sel.edges
             gen_sumw, gen_sumw2 = unumpy.nominal_values(gen.histo), unumpy.std_devs(gen.histo)**2
@@ -386,8 +528,8 @@ class EffTable(NTable):
             self.histo = unumpy.uarray(eff, s_eff)
             self.removeNan(0)
 
-            
-    
+
+
     def project(self, vars2keep=[], n_gen=None, n_sel=None, ni_errors=True):
         '''
         return a nTable of lower dimension projecting out (i.e. summing over)
@@ -401,8 +543,8 @@ class EffTable(NTable):
 
         if both are None it is assumed "n_gen = True"
 
-        if ni_errors is False put to zero all the errors for n_sel or n_gen. This is useful so if later I multiply again 
-        by sum_ni (to get the ) I do not doublecount this error and can separate error coming from yield (stat) 
+        if ni_errors is False put to zero all the errors for n_sel or n_gen. This is useful so if later I multiply again
+        by sum_ni so that I do not doublecount this error and can separate error coming from yield (stat)
         from stat error from MC finite statistics (syst)
         '''
         assert n_gen == None or n_sel == None
@@ -433,7 +575,7 @@ class EffTable(NTable):
                 if not ni_errors:
                     n_gen.histo = unumpy.uarray(unumpy.nominal_values(n_gen.histo), np.zeros(n_gen.histo.shape))
                 n_gen.histo = n_gen.histo / n_gen.histo.sum()
-                res.histo = np.tensordot(self.histo, n_gen.histo, axes=(index2sum, range(len(index2sum)))) 
+                res.histo = np.tensordot(self.histo, n_gen.histo, axes=(index2sum, range(len(index2sum))))
 
             if n_sel != None:
                 if n_sel == True:
@@ -443,7 +585,7 @@ class EffTable(NTable):
                     n_sel = n_sel.project(vars2sum)
 
                 if not ni_errors:
-                    n_sel.histo = unumpy.uarray(unumpy.nominal_values(n_sel.histo), np.zeros(n_sel.histo.shape))    
+                    n_sel.histo = unumpy.uarray(unumpy.nominal_values(n_sel.histo), np.zeros(n_sel.histo.shape))
                 n_sel.histo = n_sel.histo / n_sel.histo.sum()
                 tmp = 1 / self
                 tmp.removeNan(0)
@@ -451,7 +593,7 @@ class EffTable(NTable):
                 tmp = 1/tmp
                 tmp.removeNan(0)
                 res.histo = tmp.histo
-                #res.histo = 1 / np.tensordot(1/self.histo, n_sel.histo, axes=(index2sum, range(len(index2sum)))) 
+                #res.histo = 1 / np.tensordot(1/self.histo, n_sel.histo, axes=(index2sum, range(len(index2sum))))
 
         else:
             res = self
@@ -467,9 +609,19 @@ class EffTable(NTable):
 
         return res
 
-  
+
+def makeEffTable(tree, cut, variables, nBins=None, ranges=None, edges=None,
+                 gen_weights_var = None, sel_weights_var = None,
+                 gen_cut=None, sel_tree = None):
+    '''
+    Lot of options!
+    '''
+    gen = NTable(tree=tree, variables=variables, nBins=nBins, ranges=ranges, edges=edges,
+                 weights_var=gen_weights_var, cut=gen_cut)
+    sel = NTable(tree = tree if sel_tree is None else sel_tree,
+                 variables=variables, nBins=nBins, ranges=ranges, edges=edges,
+                 weights_var=sel_weights_var, cut=cut)
+    return EffTable(gen=gen, sel=sel)
 
 
 #######################################################################################
-
-
