@@ -123,11 +123,11 @@ class Efficiency:
 
 
 
-
 #################################################
 # Import submodules
 try:
     from distrEffs import *
 except ImportError: # When run PID I setup urania and do not have fancy python tools like root_numpy
+    print 'Not able to import distrEffs'
     pass
 #################################################

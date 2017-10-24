@@ -1,4 +1,4 @@
- 
+
 """
 Functions to deal with root trees and others
 """
@@ -35,4 +35,37 @@ def numEntries(tree, cut = None, weights_name = None):
         return sumWeights(tree, weights_name=weights_name, cut=cut)
 
 
-def makeGraph(values, errors=None):     import numpy as np     x = np.array([float(i) for i in range(len(values))])     ex = np.array([0 for i in range(len(x))])     y = np.array([float(i) for i in values])     if errors:         ey = np.array([float(i) for i in errors])     else:         ey = np.array([0 for i in range(len(x))])     return r.TGraphErrors(len(x),x, y, ex, ey) def makeHisto(name, values, title = None, range = [None, None], nBins = 100):     if range[0] == None: range[0] = min(values)     if range[1] == None: range[1] = max(values)+1     if title == None: title = name     h = r.TH1D(name, title, nBins, *range)     for i in values:         h.Fill(i)     return h def makeGraphHisto(name, title, values, errors=None):     '''     Take values and errors and make TH1D that contains graph     '''     h = r.TH1D(name, title, len(values),0,len(values))     for i in range(len(values)):         h.SetBinContent(i+1, values[i])         if errors:             h.SetBinError(i+1, errors[i])         else:             h.SetBinError(i+1, 0)     return h.Clone()
+def makeGraph(values, errors=None):
+    import numpy as np
+    x = np.array([float(i) for i in range(len(values))])
+    ex = np.array([0 for i in range(len(x))])
+    y = np.array([float(i) for i in values])
+    if errors:
+        ey = np.array([float(i) for i in errors])
+    else:
+        ey = np.array([0 for i in range(len(x))])
+    return r.TGraphErrors(len(x),x, y, ex, ey)
+
+
+def makeHisto(name, values, title = None, range = [None, None], nBins = 100):
+    if range[0] == None: range[0] = min(values)
+    if range[1] == None: range[1] = max(values)+1
+    if title == None: title = name
+    h = r.TH1D(name, title, nBins, *range)
+    for i in values:
+        h.Fill(i)
+    return h
+
+
+def makeGraphHisto(name, title, values, errors=None):
+    '''
+    Take values and errors and make TH1D that contains graph
+    '''
+    h = r.TH1D(name, title, len(values),0,len(values))
+    for i in range(len(values)):
+        h.SetBinContent(i+1, values[i])
+        if errors:
+            h.SetBinError(i+1, errors[i])
+        else:
+            h.SetBinError(i+1, 0)
+    return h.Clone()

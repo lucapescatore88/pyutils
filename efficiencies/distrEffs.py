@@ -12,13 +12,13 @@ import pandas as pd
 from uncertainties import ufloat, umath, unumpy
 try:
     from pyutils.nums import roundPair
-    from pyutils.Efficiencies import Efficiency
+    from pyutils.efficiencies import Efficiency
     from pyutils.plotting import MultiCanvas
 except ImportError:
     import sys
     sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),'../..'))
     from pyutils.nums import roundPair
-    from pyutils.Efficiencies import Efficiency
+    from pyutils.efficiencies import Efficiency
     from pyutils.plotting import MultiCanvas
 
 def _getRec(coso, variables=None, cut='', **kwargs):
@@ -220,9 +220,8 @@ class NTable:
         '''
         deepcopy instance
         '''
-        res = NTable()
-        res.edges = [i.copy() for i in self.edges]
-        res.variables = self.variables[:]
+        res = NTable(variables=self.variables[:],
+                     edges= [i.copy() for i in self.edges])
         res.histo = self.histo.copy()
         for coso in self.__dict__:
             if coso not in ['variables', 'edges', 'histo']:
