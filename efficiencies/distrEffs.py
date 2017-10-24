@@ -11,15 +11,15 @@ import pandas as pd
 #import seaborn as sns
 from uncertainties import ufloat, umath, unumpy
 try:
-    from pyUtils import roundPair
-    from pyUtils.Efficiencies import Efficiency
-    from pyUtils.MultiCanvas import MultiCanvas
+    from pyutils.nums import roundPair
+    from pyutils.Efficiencies import Efficiency
+    from pyutils.plotting import MultiCanvas
 except ImportError:
     import sys
     sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),'../..'))
-    from pyUtils import roundPair
-    from pyUtils.Efficiencies import Efficiency
-    from pyUtils.MultiCanvas import MultiCanvas
+    from pyutils.nums import roundPair
+    from pyutils.Efficiencies import Efficiency
+    from pyutils.plotting import MultiCanvas
 
 def _getRec(coso, variables=None, cut='', **kwargs):
     '''
