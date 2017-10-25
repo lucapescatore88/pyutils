@@ -1,19 +1,16 @@
 #!/bin/tcsh
 
+# Define root variable
 set EXE = "$0"
 set EXE = `echo $EXE | sed s:"-"::`
 set EXE = `basename $EXE`
-
-setenv REPOSYS `readlink -f "$EXE"`
-setenv REPOSYS `echo $REPOSYS | sed s:"/$EXE"::`
-set STRINGS = "`ls -d $REPOSYS/*/ | sed s:"$REPOSYS/":: | sed s:"/"::`"
-#set STRINGS = "$STRINGS `ls -d $REPOSYS/../*/ | sed s:"$REPOSYS/../":: | sed s:"/"::`"
+setenv PYUTILSROOT `readlink -f "$EXE"`
+setenv PYUTILSROOT `echo $PYUTILSROOT | sed s:"/$EXE"::`
+set STRINGS = "`ls -d $PYUTILSROOT/*/ | sed s:"$PYUTILSROOT/":: | sed s:"/"::`"
+#set STRINGS = "$STRINGS `ls -d $PYUTILSROOT/../*/ | sed s:"$PYUTILSROOT/../":: | sed s:"/"::`"
 foreach STRING ( $STRINGS )
-    setenv REPOSYS `echo $REPOSYS | sed s:"/$STRING"::`
+    setenv PYUTILSROOT `echo $PYUTILSROOT | sed s:"/$STRING"::`
 end
-
-# Define root variable
-setenv PYUTILSROOT $REPOSYS
 setenv PYUTILSMOM `echo $PYUTILSROOT | sed s:"/pyutils"::`
 setenv PYTHONPATH ${PYUTILSMOM}:$PYTHONPATH
 
