@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ## Define root variable
 export PYUTILSROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export PYUTILSMOM="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
@@ -13,4 +15,3 @@ export PYUTILS_PROCESSING=$PYUTILSROOT/processing/
 
 alias addPID='python $PYUTILSROOT/nums/addPID.py'
 alias submit='python $PYUTILSROOT/processing/submit.py'
-
