@@ -10,97 +10,85 @@ from glob import glob
 if __name__ == '__main__':
 
     parser = ArgumentParser()
-    parser.add_argument("-m","--maxev",   default=1e14,type=float)
     parser.add_argument("-O","--outfile", default="out")
-    parser.add_argument("-T","--outtree", default=None)
+    parser.add_argument("-T","--outtree", default="tree")
+    parser.add_argument("-P","--outpath", default="")
     parser.add_argument("-t","--tname",   default="DecayTreeTuple/DecayTree")
-    parser.add_argument("-d","--dtype",   default=None)
-    parser.add_argument("-i","--fromid",  default=None)
+    parser.add_argument("-f","--inputs",  nargs="+")
+    parser.add_argument("-M","--modpath", default=os.getenv("PWD"))
+    parser.add_argument("-w","--worker",  default=[None], nargs='*')
+    parser.add_argument("-c","--cuts",    default=[None], nargs='*')
     parser.add_argument("-q","--queue",   default="1nd")
-    parser.add_argument("-w","--worker",  default=[None,None,None], nargs='*',help='-w addMVA/addVariablesAndMVA MODE MVA_TYPE ')
-    parser.add_argument("-c","--cuts",    default=[None, None], nargs='*', help='-c cutStripPID Prompt or SL or MCSLLc2pKpi or MCLc2pmm/MCLc2pmm')
-    parser.add_argument("--friends",      default="")
+    parser.add_argument("-m","--maxev",   default=1e14,type=float)
     parser.add_argument("--local",        action="store_true")
     parser.add_argument("--clone",        action="store_true")
-    parser.add_argument("--makeFriends",  action="store_true")
+    parser.add_argument("--merge",        action="store_true")
     parser.add_argument("--force",        action="store_true")
     parser.add_argument("--checkjobs",    action="store_true")
     parser.add_argument("--checkoutfile", action="store_true")
-    parser.add_argument("-f","--inputs",  nargs="+")
+    
     args = parser.parse_args()
     
+    sys.path.append(args.modpath)
+
     if args.local :
        
         worker = None
+        print args.worker[0]
         if args.worker[0] is not None :
-            worker = importlib.import_module("routines."+args.worker[0])
-            worker.dtype = args.worker[1]
-            worker.method = args.worker[2]
+            worker = importlib.import_module(args.worker[0])
+            print worker
         cutter = None
         if args.cuts[0] is not None :
-            cutmod = importlib.import_module("routines."+args.cuts[0])
-            cutmod.dtype = args.cuts[1]
+            cutmod = importlib.import_module(args.cuts[0])
             cutter = cutmod.cutEvents
     ncategories = 10
     
     trees = []
     
-    files = args.inputs
-    friends = None
-    if files is None :
-        if args.dtype is not None or args.fromid is not None :
-            myfriends = []
-            if args.friends != "" : myfriends = args.friends.split(',')
-            print "Retrieving files and friends (", myfriends, ")"
-            files, friends = getDataFiles(opts=args,friends = myfriends)
-            print "Files retrieved, building chains"
-            for tname in args.tname.split(';') :
-                tree = buildChain(tname,files,friends,check = False)
-                print "Tree", tname,":", tree.GetEntries(), "entries found"
-                trees.append(tree)
-        else :
-            print "No files to reduce"
-            sys.exit()
-    else :
+    files = []
+    for inpt in args.inputs :
+        files.extend(glob(inpt))
+     
+    args.extra = {'ncategories' : ncategories}
+    
+    if args.merge :
+        
+        print "Output will be merged in a single file"
         for tname in args.tname.split(';') :
             tree = TChain(tname)
-            for f in files : 
+            for f in files :
                 print "Adding file: ", f
                 tree.AddFile(f)
             trees.append(tree)
     
-    #sys.exit()
-    
-    args.extra = {'ncategories' : ncategories}
-    
-    if not args.makeFriends :
         loopTrees(trees,worker,cutter=cutter,args=args)
-    else :    
-        usr=os.getenv('USER')
-        if usr=="pluca":
-            tuplePath=loc.FRIENDS
-        elif usr=="mstamenk":
-            tuplePath=loc.MARKOFRIENDS
-        else:
-            print "Please specify friends tuple path"
-            sys.exit()
-        rootdir = tuplePath+args.outtree.replace(".root","")
-    
+
+    else : 
+
+        #usr=os.getenv('USER') 
+        rootdir = args.outpath+args.outtree.replace(".root","")
         os.system("mkdir -p "+rootdir)
-        print "Friends will go into", rootdir
+
+        print "Output will be separate per each input file"
+        
         for fi,f in enumerate(files) : 
     
-            ids = re.findall('/(\d+)/(\d+)/',f)[0]
-            os.system("mkdir -p "+rootdir+'/'+str(ids[0]))
-            curdir = rootdir+'/'+'/'.join(ids)
+            #ids = re.findall('/(\d+)/(\d+)/',f)[0]
+            #os.system("mkdir -p "+rootdir+'/'+str(ids[0]))
+            #curdir = rootdir+'/'+'/'.join(ids)
+            #os.system("mkdir -p "+curdir)
+            ids = re.findall('/(\d+)/',f)[0]
+            curdir = rootdir+'/'+str(ids[0])
             os.system("mkdir -p "+curdir)
-    
+            
             args.outtree = args.outtree.replace(".root","")
             args.outfile = curdir + "/{name}.root".format(name=args.outtree)
     
             ## Check if already done correctly
             redo = False
-            if len(glob(args.outfile)) > 0 : 
+            if len(glob(args.outfile)) > 0 :
+                print "Output:", args.outfile
                 if args.checkoutfile :
                     
                     myf = TFile.Open(args.outfile)
@@ -129,8 +117,8 @@ if __name__ == '__main__':
                 
                 trees = []
                 for tname in args.tname.split(';') : 
-                    if friends is not None : tree = buildChain(tname,[f],[friends[fi]])
-                    else : tree = buildChain(tname,[f])
+                    tree = TChain(tname)
+                    tree.AddFile(f)
                     trees.append(tree)
     
                 loopTrees(trees,worker,cutter=cutter,args=args)
