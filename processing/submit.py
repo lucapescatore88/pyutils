@@ -39,11 +39,14 @@ def launch_interactive(dirname) :
 
 if __name__ == "__main__" :
 
+    basedir = os.getenv("JOBDIR")
+    if basedir is None : basedir = os.getenv("HOME")
+
     parser = ArgumentParser()
     parser.add_argument("-d", default="", dest="subdir", 
         help="Folder of the job, notice that the job is created anyway in a folder called as the jobname, so this is intended to group jobs")
     parser.add_argument("-r", default=-1, dest="run", help="Add run number")
-    parser.add_argument("-D", default=os.getenv("JOBDIR"), dest="basedir",
+    parser.add_argument("-D", default=basedir, dest="basedir",
         help="This option bypasses the JOBDIR environment variable and creates the job's folder in the specified folder")
     parser.add_argument("-n", default="", dest="jobname", 
         help="Give a name to the job. The job will be also created in a folder with its name (default is the executable name)")
