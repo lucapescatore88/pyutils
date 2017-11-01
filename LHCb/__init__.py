@@ -1,0 +1,1 @@
+from LHCbStyle import lhcbStyle

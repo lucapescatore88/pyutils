@@ -19,9 +19,9 @@ def getHisto(tree, name, expr=None, region=None, nBins = None, cut='', title = N
     if cut != '': cuts.append(cut)
     if tree_cut != '': cuts.append(tree_cut)
     region_str = ''
-    
+
     if len(expr.split(':'))==2:
-        if region:
+        if region and len(region) == 4: # avoid coming here if region is set to min or max in CompareTreeVars
             expr_y, expr_x = expr.split(':')
             cuts += [expr_x+'>'+str(region[0]), expr_x+'<'+str(region[1]),expr_y+'>'+str(region[2]), expr_y+'<'+str(region[3])]
             region_str = '({0}, '+str(region[0])+', '+str(region[1])+', {1}, '+str(region[2])+', '+str(region[3])+')'
@@ -32,9 +32,9 @@ def getHisto(tree, name, expr=None, region=None, nBins = None, cut='', title = N
         if region:
             cuts += [expr+'>'+str(region[0]), expr+'<'+str(region[1])]
             region_str = '({0}, '+str(region[0])+', '+str(region[1])+')'
-        else: region_str = '({0})'  
+        else: region_str = '({0})'
         bin_str = region_str.format(nBins if nBins != None else 100)
-        
+
     cut_string = ' && '.join(cuts)
     if tree_weight != '':
         cut_string = '('+cut_string+')*'+str(tree_weight) if cut_string else str(tree_weight)
@@ -63,7 +63,7 @@ def getHisto(tree, name, expr=None, region=None, nBins = None, cut='', title = N
 
     if removeErrors:
         histo.Sumw2(False)
-            
+
     return histo
 
 
@@ -74,7 +74,10 @@ def _getHistoRegion(*args, **kargs):
     all the arguments are passed to getHisto
     '''
     hh = getHisto(*args, **kargs)
-    return [hh.GetBinLowEdge(1), hh.GetBinLowEdge(hh.GetNbinsX())+hh.GetBinWidth(hh.GetNbinsX())]
+    if hh.GetDimension() == 1:
+        return [hh.GetBinLowEdge(1), hh.GetBinLowEdge(hh.GetNbinsX())+hh.GetBinWidth(hh.GetNbinsX())]
+    elif hh.GetDimension() == 2:
+        return None #[hh.GetBinLowEdge(1), hh.GetBinLowEdge(hh.GetNbinsX())+hh.GetBinWidth(hh.GetNbinsX())]
 
 
 
@@ -87,7 +90,7 @@ class CompareTreeVars:
         trees is a dictionary of trees with {label: tree}
 
         names is list of names of histos to plot, a name can also be directly name of variable in tree
-        
+
         exprs, regions, cuts, titles, opts are dictionary with informations of the histograms, they use as key the general name of the histogram
 
         common_cut is a cut to apply to all histograms
@@ -124,11 +127,11 @@ class CompareTreeVars:
                 tree_weight = trees_weights.get(label,''),
                 evtMax = maxEvts.get(label,1000000000),
                 **self.addOpts.get(label,{}))
-        
+
         self.common_cut = common_cut
         self.normalise = normalise
         self.histos_info = collections.OrderedDict()
-                
+
         if names:
             for name in names:
                 self.addVariable(
@@ -144,7 +147,7 @@ class CompareTreeVars:
     def addTree(self, label, tree, tree_cut='', tree_weight='',evtMax = 1000000000, removeErrors=False, **add_opts):
         '''
         in add_opts I can put options for the constructor of MultiPlot
-        removeErrors allow to plot histogram without errors (e.g. with fills) also when weights are present 
+        removeErrors allow to plot histogram without errors (e.g. with fills) also when weights are present
         '''
         self.trees[label] = tree
         if tree_weight != '': self.trees_weights[label] = tree_weight
@@ -152,9 +155,9 @@ class CompareTreeVars:
         self.trees_maxEvts[label] = evtMax
         self.addOpts[label] = add_opts
         self.removeErrors[label] = removeErrors
-        
-            
-            
+
+
+
     def addVariable(self, name, expr=None, region='default', nBins = None, cut='', title=None, bins_limits=None, opts=''):
         if cut == '' or self.common_cut == '':
             cut += self.common_cut
@@ -172,8 +175,8 @@ class CompareTreeVars:
             bins_limits=bins_limits,
             opts = opts,
             )
-        
-        
+
+
     def getMultiPlots(self, **kargv):
         '''
         Return dictionary of MultiPlot
@@ -215,6 +218,5 @@ class CompareTreeVars:
                 #if len(infos['expr'].split(':'))==2: histo.Scale(0.0000001/histo.Integral())
                 if not self.addOpts[label].has_key('legMarker'): self.addOpts[label]['legMarker']= 'p'
                 MultiPlots[name].Add(histo, label = label, **self.addOpts[label])
-                
+
         return MultiPlots
-            
