@@ -116,8 +116,6 @@ class NTable:
         else:
             self.histo= unumpy.uarray(np.zeros(nBins), np.zeros(nBins))
 
-        # To return for a whole vector the content to the correspondin bins
-        self._call_vect = np.vectorize(self.__call__)
 
     @property
     def val(self):
