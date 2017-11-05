@@ -500,10 +500,15 @@ class NTable:
         if error is true return an ufloat else just a number
         '''
         rec = _getRec(tree)
+        which_bins = [np.digitize(rec[var],edg)-1 for var, edg in zip(self.variables, self.edges)]
+        hh = self.histo[:]
+        for ax, i in enumerate(hh.shape):
+            hh = np.insert(hh,i,0,axis=ax)
         if errors:
-            return self._call_vect(rec[self.variables])
+            return hh[which_bins]
         else:
-            return unumpy.nominal_values(self._call_vect(rec[self.variables]))
+            return unumpy.nominal_values(hh[which_bins])
+
 
 
 class EffTable(NTable):
