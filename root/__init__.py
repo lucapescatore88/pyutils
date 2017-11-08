@@ -69,3 +69,8 @@ def makeGraphHisto(name, title, values, errors=None):
         else:
             h.SetBinError(i+1, 0)
     return h.Clone()
+
+
+
+# Import functions from roofit
+from roofit import *
