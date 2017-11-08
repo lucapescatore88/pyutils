@@ -73,7 +73,7 @@ def launch_job(opts) :
     
     if not opts.abspath :
         os.system("cp " + execname + " " + copyto )
-    print("cp " + execname + " " + copyto )
+    #print("cp " + execname + " " + copyto )
     
     for arg in opts.infiles.split() :
         os.system("cp " + arg + " " + copyto )
