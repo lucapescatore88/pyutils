@@ -32,7 +32,7 @@ class LatexDoc :
     from utils.latex_builder import LatexDoc
 
     latex = latex_doc("output.tex")
-    latex.set_title("My cool title")
+    latex.set_title("My c(ool title")
     latex.add_to_preamble(loc.LATEX+"/preamble.tex") # Standad LHCb preamble provided
     latex.add_to_preamble(loc.LATEX+"/lhcb-symbols-def.tex") # Standad LHCb symbols provided
     latex.insert_line("Inserts some explanation: main text of the latex")
@@ -64,10 +64,12 @@ class LatexDoc :
         self.file.write("\n\n\\end{document}\n")
         self.file.close()
         self.file = open(title,"r+")
+        self.add_to_preamble(os.getenv('PYUTILS_LHCBINFO')+"/latex/preamble.tex") # Standad LHCb preamble provided
+        self.add_to_preamble(os.getenv('PYUTILS_LHCBINFO')+"/latex/lhcb-symbols-def.tex") # Standad LHCb symbols provided
 
     def insert_line(self, text) :
 
-        insert_line_before(self.filetitle, "end{document}", text) 
+        insert_line_before(self.filetitle, "end{document}", text+'\n') 
         self.file = open(self.filetitle,"r+")
 
     def insert_line_after(self, search, text) :
@@ -96,17 +98,38 @@ class LatexDoc :
             text = open(text).read()
         self.insert_line(text)
 
+    def insert_figure(self, fig, width = None, ninrow=1, caption="Caption") :
+
+        if width is None : width = 0.9 / ninrow
+        if isinstance(fig,list) :
+            for fi,pic in enumerate(fig) :
+
+                if fi % ninrow == 0 :
+                    print "start"
+                    self.insert_line("\\begin{figure}[h!]")
+                self.insert_line("\\includegraphics[width={w}\\textwidth]{{{f}}}".format(w=width,f=pic))
+                
+                if fi%ninrow == (ninrow-1) or (fi == len(fig)-1) : 
+                    self.insert_line('\\caption{"'+caption+'"}')
+                    self.insert_line("\\end{figure}\n")
+                    print "Done"
+        else :
+            self.insert_line("\\begin{figure}")
+            self.insert_line("\\includegraphics[width={w}\\textwidth]{{{f}}}\n".format(w=width,f=fig))
+            self.insert_line('\\caption{'+caption+'}\n')
+            self.insert_line("\\end{figure}\n")
+
     def insert_tabular(self, tab, caption = "", struct = None) :
 
         if ".txt" in tab[-4:] :
             tab = open(tab).read()
 
-        self.insert_line('\\begin{table}[hb!]\n\\begin{center}\n')
-        self.insert_line('\\caption{'+caption+'}\n')
-        if struct : self.insert_line('\\begin{tabular}{'+struct.replace("{","").replace("}","")+'}\\hline\n')
-        self.insert_line(tab+"\n")
-        if struct : self.insert_line('\\hline\n\\end{tabular}\n')
-        self.insert_line('\n\\end{center}\n\\end{table}\n\n')
+        self.insert_line('\\begin{table}[hb!]\n\\begin{center}')
+        self.insert_line('\\caption{'+caption+'}')
+        if struct : self.insert_line('\\begin{tabular}{'+struct.replace("{","").replace("}","")+'}\\hline')
+        self.insert_line(tab+"")
+        if struct : self.insert_line('\\hline\n\\end{tabular}')
+        self.insert_line('\\end{center}\n\\end{table}\n')
 
     def insert_tabular_from_grid(self, grid, caption = None, has_title = True) :
 
@@ -135,12 +158,8 @@ class LatexDoc :
     def close_and_compile(self,clear=True) :
 
         self.file.close()
-        odir = os.path.dirname(self.filetitle) 
-        cmd = "pdflatex -output-directory={odir} {tex}".format(odir=odir,tex=self.filetitle)
-        print cmd
-        sub.call(cmd,shell=True)
-        if clear :
-            for pattern in ["*.out","*.aux","*.log"] :
-                for f in glob(odir+"/"+pattern) :
-                    os.remove(f)
+        print "pdflatex " + self.filetitle
+        sub.call("pdflatex " + self.filetitle,shell=True)
+        for f in glob("*.log")+glob("*.aux")+glob("*.out") : os.remove(f)
+
 
