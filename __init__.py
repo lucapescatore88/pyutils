@@ -19,7 +19,7 @@ import nums
 import db
 import editing
 import plotting
-#import efficiencies
+import efficiencies
 from LHCb import LHCbStyle
 
 
