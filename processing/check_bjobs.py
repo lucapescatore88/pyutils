@@ -1,14 +1,9 @@
 import os, argparse
 import subprocess as sb
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-j","--jname",default = None)
-args = parser.parse_args()
-
 def check_jobs(jname) :
     
-    out = sb.check_output("bjobs",shell=True)
-
+    out = str(sb.check_output(["bjobs"]))#,shell=True)
     d = {'RUN' : 0, 'PEND' : 0}
     for l in out.split('\n')[1:] :
         toks = l.split()
@@ -26,7 +21,7 @@ def check_jobs(jname) :
 
 def is_job_done(name) :
 
-    d = check_job(name)
+    d = check_jobs(name)
 
     if d['PEND'] == 0 and d['RUN'] == 0 :
         return True
