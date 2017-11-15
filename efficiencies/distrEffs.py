@@ -416,7 +416,15 @@ class NTable:
         return res
 
 
-    def Draw(self, vars2keep=None, opts='', isSumw2=False, title = '', **kargs):
+    def Draw(self, opts='', vars2keep=None, isSumw2=False, title = '', **kargs):
+        '''
+        Draw the nTable with ROOT after having converted it to a ROOT histogram
+        opts are the options passed to the ROOT Draw
+        vars2keep is to draw only certain variables projecting out the others
+        isSumw2 is to have plotted error bars
+        title is the title given to the histogram (can be used to set axes labels with title='title;x-label;y-label')
+        **kargs is passed to the project function
+        '''
         if vars2keep == None:
             vars2keep = self.variables
         if isinstance(vars2keep,str):
