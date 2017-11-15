@@ -341,7 +341,7 @@ class NTable:
             if not unicode(perm[i]).isnumeric():
                 perm[i] = self.variables.index(perm[i])
         perm = tuple(perm)
-        res = copy.deepcopy(self)
+        res = self.copy()
         res.variables=[self.variables[i] for i in perm]
         res.histo = self.histo.transpose(perm)
         res.edges =  [self.edges[i] for i in perm]
@@ -438,9 +438,9 @@ class NTable:
             drawables.append([])
             for j in range(ndim):
                 if i == j:
-                    drawables[i].append(self.Draw([i], isSumw2=isSumw2, **kargs))
+                    drawables[i].append(self.Draw(vars2keep=[i], isSumw2=isSumw2, **kargs))
                 else:
-                    drawables[i].append((self.Draw([i,j], **kargs), 'colz'+('text e' if isSumw2 else '')))
+                    drawables[i].append((self.Draw(vars2keep=[i,j], **kargs), 'colz'+('text e' if isSumw2 else '')))
         return MultiCanvas(drawables)
 
 
