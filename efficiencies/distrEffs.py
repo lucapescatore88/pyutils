@@ -110,7 +110,7 @@ class NTable:
 
 
         if histo is not None:
-            self.readHisto(tree, self.variables) # N.B. will rewrite edges
+            self.readHisto(histo, self.variables) # N.B. will rewrite edges
         elif tree is not None:
             self.readTree(tree, self.edges)
         else:
@@ -179,6 +179,8 @@ class NTable:
 
         self.variables=variables
         self.edges = edges
+        nBins = [len(i)-1 for i in edges]
+        self.histo= unumpy.uarray(np.zeros(nBins), np.zeros(nBins))
 
         if histo.GetDimension() == 1:
             for i in range(histo.GetNbinsX()):
