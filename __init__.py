@@ -9,7 +9,7 @@ loc.ROOT = root_dir
 for d in glob.glob(loc.ROOT+'/*') :
     name = os.path.basename(d)
     if '.' in name : continue
-    loc.__dict__[name.upper()] = d
+    setattr( loc, name.upper(), d )
 loc.LATEX = loc.LHCB+'/latex'
 
 

@@ -58,7 +58,7 @@ def roundDict(dd, sig='PDG', cfr_fixed=None):
 try:
     from uncertainties import ufloat
 except ImportError:
-    print "uncertainties not found, funtions to deal with ufloats not available"
+    print("uncertainties not found, funtions to deal with ufloats not available")
 
 def dictErrors(num, pattern=None, regex=None):
     '''
