@@ -39,4 +39,27 @@ class PartialFormatter(string.Formatter):
             else: raise
 
 
+class Template():
+
+    def __init__(self,fname) :
+        self.fname = fname
+        try :
+            ifile = open(self.fname,'r')
+            self.template = ifile.read()
+        except :
+            print "Cannot open file", self.fname
+
+    def fill(self,data,ofile,opt = "") :
+
+        out = open(ofile,'w')
+        
+        tmp = self.template
+        if opt=="nospace" : tmp = self.template.replace(" ","")
+        
+        otext = PartialFormatter().format(tmp,**data)
+        out.write(otext)
+        out.close()
+
+
+
 
