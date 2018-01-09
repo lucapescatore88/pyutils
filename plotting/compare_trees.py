@@ -163,7 +163,7 @@ class CompareTreeVars:
             cut += self.common_cut
         else:
             cut += ' && '+ self.common_cut
-        if title == None: title = name
+        if title == None: title = '{0};{0};A.U.'.format(name)
         if expr == None: expr = name
         if self.normalise: opts = 'norm ' + opts
         self.histos_info[name] = dict(
