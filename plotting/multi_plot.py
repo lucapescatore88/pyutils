@@ -18,8 +18,8 @@ def setPlotAttributes(histo, color = None, markerStyle = None, fill=False, marke
         histo.SetMarkerSize(markerSize)
     if lineStyle:
         histo.SetLineStyle(lineStyle)
-    
-    
+
+
 class MultiPlot:
     """
     Class wrapper to THStack and TMultiGraph which also fill legend
@@ -28,11 +28,11 @@ class MultiPlot:
 
     histos can be provided at construction or via the Add method:
     Costructor take dictionaries with histos, legends, styles, colors, markerStyles
-    
+
     histos: dictionary with histos to be added
-    
+
     legends: dictionary with legends, if a key is present in the histos dict but not in the legends dict than it won't be added to the legend
-    
+
     styles, colors, markerStyles, fillHistos dictionary for style, color markerStyle and fill,
     if a key is present in the histos dict but not in the styles,... one will keep the default (automatic if autoStyle==True or the one already of the histo)
     fill can be True of False (histo filled or not), default is True for stack and false for histos
@@ -103,7 +103,7 @@ class MultiPlot:
             _fillStyle = fillStyles.get(key)
             _fill = fillHisto.get(key)
             self.Add(histo=_histo,label=_label, style=_style, color=_color,markerStyle=_markerStyle, markerSize = _markerSize, lineStyle = _lineStyle, fill=_fill)
-            
+
 
     def Add(self, histo, label=None, style=None, color=None, markerStyle=None, markerSize=None, lineStyle=None, fillStyle=None, fill=None, legMarker=None):
         """
@@ -120,13 +120,13 @@ class MultiPlot:
             _color = MultiPlot.colori[abs(_style)-1]
             _lineStyle = MultiPlot.linee[abs(_style)-1]
             _fillStyle = MultiPlot.fills[abs(_style)-1]
-            _markerStyle = MultiPlot.markersA[_style-1] if _style>0 else MultiPlot.markersC[abs(_style)-1] 
+            _markerStyle = MultiPlot.markersA[_style-1] if _style>0 else MultiPlot.markersC[abs(_style)-1]
         if color: _color = color
         if markerStyle: _markerStyle = markerStyle
         if lineStyle: _lineStyle = lineStyle
         if fillStyle: _fillStyle = fillStyle
         if markerSize: _markerSize = markerSize
-        
+
         if fill != None: _fill = fill
         else: _fill = (self.kind == 's')
         setPlotAttributes(self.hist_list[self.numHistos-1], color=_color, markerStyle=_markerStyle, markerSize=_markerSize, lineStyle = _lineStyle, fill=_fill, fillStyle=_fillStyle)
@@ -134,7 +134,7 @@ class MultiPlot:
         if label:
             self.leg.AddEntry(self.hist_list[self.numHistos-1], label, legMarker)
 
-            
+
     def __getitem__(self, key):
         '''get Histogram by name'''
         for h in self.hist_list:
@@ -143,7 +143,7 @@ class MultiPlot:
                     return h
             except AttributeError:
                 pass
-        return KeyError(key+' not found')
+        return KeyError(str(key)+' not found')
 
 
     def AddLine(self, val, kind='h', color=None, style=None, width=None):
@@ -169,9 +169,13 @@ class MultiPlot:
         self.leg.SetX2(x2)
         self.leg.SetY1(y1)
         self.leg.SetY2(y2)
-        
-                
-    def Draw(self):
+
+
+    def Draw(self, opts=''):
+        '''
+        Draw the multiplot, opts does nothing, there just to avoid errors
+        if try to call it with some otion
+        '''
         if self.kind.lower() in ('p', 'profile'):
             newMin, newMax = None, None
             if self.rangeY[0] == None:
@@ -188,7 +192,7 @@ class MultiPlot:
             # minX, maxX = (self.hist_list[0].GetBinLowEdge(1), self.hist_list[0].GetBinLowEdge(self.hist_list[0].GetNbinsX())+self.hist_list[0].GetBinWidth(self.hist_list[0].GetNbinsX()))
             self.hs.GetXaxis()
             minX, maxX = (self.hs.GetXaxis().GetXmin(), self.hs.GetXaxis().GetXmax())
-            if self.rangeX[0] != None and self.rangeX[0] > minX: minX = self.rangeX[0] 
+            if self.rangeX[0] != None and self.rangeX[0] > minX: minX = self.rangeX[0]
             if self.rangeX[1] !=  None and self.rangeX[1] < maxX: maxX = self.rangeX[1]
             self.hs.GetXaxis().SetRangeUser(minX,maxX)
             self.hs.Draw(self.DrawOption)
@@ -204,7 +208,7 @@ class MultiPlot:
                     self.lines[val].SetLineStyle(self.hlines_styles.get(val, 7))
                 self.lines[val].SetLineColor(self.hlines_colors.get(val, r.kBlack))
                 self.lines[val].SetLineWidth(self.hlines_width.get(val, 1))
-                
+
         if self.vlines:
             self.lines2 = {}
             for val in self.vlines:

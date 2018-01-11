@@ -56,10 +56,13 @@ def getHisto(tree, name, expr=None, region=None, nBins = None, cut='', title = N
         histo = h.Clone(name)
     except ReferenceError: #attempt to access a null-pointer
         raise ReferenceError(name+' '+expr+' does not work')
-    if title != None:
+    if title is None:
+        if len(expr.split(':'))==2:
+            histo.SetTitle(';{1};{0}'.format(*expr.split(':')))
+        else:
+            histo.SetTitle(';{0};A.U.'.format(expr))
+    else:
         histo.SetTitle(title)
-    # else:
-    #     histo.SetTitle(name)
 
     if removeErrors:
         histo.Sumw2(False)
@@ -163,7 +166,7 @@ class CompareTreeVars:
             cut += self.common_cut
         else:
             cut += ' && '+ self.common_cut
-        if title == None: title = name
+        if title == None: title = '{0};{0};A.U.'.format(name)
         if expr == None: expr = name
         if self.normalise: opts = 'norm ' + opts
         self.histos_info[name] = dict(

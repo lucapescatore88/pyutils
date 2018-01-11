@@ -39,11 +39,16 @@ class MultiCanvas:
                 drawable = self.drawables[i][j]
                 try:
                     drawable, opts = drawable
-                except ValueError:
+                except ValueError, TypeError:
                     opts = ''
-                if 'colz'in opts:
+                if 'colz' in ''.join([str(i) for i in opts]): # works both for a single string or a list of options
                     r.gPad.SetRightMargin(0.15)
-                drawable.Draw(opts)
+                if 'logz' in ''.join([str(i) for i in opts]): # works both for a single string or a list of options
+                    r.gPad.SetLogz()
+                if isinstance(opts, str):
+                    drawable.Draw(opts)
+                else:
+                    drawable.Draw(*opts)
             except IndexError:
                 pass
         canvas.cd(0)
@@ -52,7 +57,7 @@ class MultiCanvas:
 if __name__ == '__main__':
 
     c = r.TCanvas()
-    
+
     h1 = r.TH1D('h1', 'h1', 10, 0,10)
     for i in range(5):
         h1.Fill(i)
@@ -66,9 +71,8 @@ if __name__ == '__main__':
         for j in range(5,10):
             h3.Fill(i,j)
 
-    
+
     mc = MultiCanvas([[h1,h2],[(h3,'colz')]])
     mc.Draw(c)
 
     c.Update()
-    
