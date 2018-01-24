@@ -22,11 +22,10 @@ class PartialFormatter(string.Formatter):
         self.missing, self.bad_fmt=missing, bad_fmt
 
     def get_field(self, field_name, args, kwargs):
-        val=super(PartialFormatter, self).get_field(field_name, args, kwargs)
+
         try:
             val=super(PartialFormatter, self).get_field(field_name, args, kwargs)
         except (KeyError, AttributeError):
-            print 'Qui'
             val=None,field_name
         return val
 
