@@ -39,7 +39,7 @@ class MultiCanvas:
                 drawable = self.drawables[i][j]
                 try:
                     drawable, opts = drawable
-                except ValueError, TypeError:
+                except (ValueError, TypeError):
                     opts = ''
                 if 'colz' in ''.join([str(i) for i in opts]): # works both for a single string or a list of options
                     r.gPad.SetRightMargin(0.15)

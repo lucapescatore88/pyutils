@@ -16,18 +16,19 @@ class PartialFormatter(string.Formatter):
     fmt = Formatter()
     table = fmt.format(open("table_template.txt").read(),**some_dictionary)
     '''
-    
-    
+
+
     def __init__(self, missing='--', bad_fmt='!!'):
         self.missing, self.bad_fmt=missing, bad_fmt
 
     def get_field(self, field_name, args, kwargs):
-        
+        val=super(PartialFormatter, self).get_field(field_name, args, kwargs)
         try:
             val=super(PartialFormatter, self).get_field(field_name, args, kwargs)
         except (KeyError, AttributeError):
-            val=None,field_name 
-        return val 
+            print 'Qui'
+            val=None,field_name
+        return val
 
     def format_field(self, value, spec):
                 # handle an invalid format
@@ -35,7 +36,7 @@ class PartialFormatter(string.Formatter):
         try:
             return super(PartialFormatter, self).format_field(value, spec)
         except ValueError:
-            if self.bad_fmt is not None: return self.bad_fmt   
+            if self.bad_fmt is not None: return self.bad_fmt
             else: raise
 
 
@@ -52,14 +53,10 @@ class Template():
     def fill(self,data,ofile,opt = "") :
 
         out = open(ofile,'w')
-        
+
         tmp = self.template
         if opt=="nospace" : tmp = self.template.replace(" ","")
-        
+
         otext = PartialFormatter().format(tmp,**data)
         out.write(otext)
         out.close()
-
-
-
-
