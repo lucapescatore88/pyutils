@@ -35,15 +35,12 @@ def numEntries(tree, cut = None, weights_name = None):
         return sumWeights(tree, weights_name=weights_name, cut=cut)
 
 
-def makeGraph(values, errors=None):
+def makeGraph(values, errors=None, x_values=None, errors_x = None):
     import numpy as np
-    x = np.array([float(i) for i in range(len(values))])
-    ex = np.array([0 for i in range(len(x))])
+    x = np.array([float(i) for i in range(len(values))]) if x_values is None else np.array([float(i) for i in x_values])
+    ex = np.array([0 for i in range(len(x))]) if errors_x is None else np.array([float(i) for i in errors_x])
     y = np.array([float(i) for i in values])
-    if errors:
-        ey = np.array([float(i) for i in errors])
-    else:
-        ey = np.array([0 for i in range(len(x))])
+    ey = np.array([0 for i in range(len(x))]) if errors is None else np.array([float(i) for i in errors])
     return r.TGraphErrors(len(x),x, y, ex, ey)
 
 
