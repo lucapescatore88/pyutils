@@ -138,7 +138,7 @@ class NTable:
         if cut == None: cut = self.cut
         if weights_var == None: weights_var = self.weights_var
         if weights_var or weights_array:
-            df = _getDF(tree, variables=self.variables, cut=cut)
+            df = _getDF(tree, variables=self.variables+[weights_var], cut=cut)
             if weights_var:
                 df['w'] = df[weights_var]
             elif weights_array:
