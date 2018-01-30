@@ -20,6 +20,5 @@ import db
 import editing
 import plotting
 import efficiencies
-from LHCb import LHCbStyle
-
-
+import scripts
+import LHCb

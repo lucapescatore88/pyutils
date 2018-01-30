@@ -4,8 +4,8 @@ You can use this object to automatically build latex from templates and compile 
 
 Here an example
 ```
-from utils.formatter import PartialFormatter as Formatter
-from utils.latex_builder import latex_doc
+from pyutils.editing import PartialFormatter as Formatter
+from pyutils.editing import latex_doc
 
 fmt = Formatter()
 table = fmt.format(open(loc.TEPLATES+"table_template.txt").read(),**results)

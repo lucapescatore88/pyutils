@@ -1,1 +1,1 @@
-from LHCbStyle import lhcbStyle
+from LHCbStyle import set_lhcbStyle
