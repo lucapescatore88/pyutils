@@ -16,6 +16,7 @@ def remotels_simple(location,pattern = '',opt='') :
     out = out.split('\n')
     out = [ x.replace(xrootd,'') for x in out if len(x) > 0 ]
     out = [ x for x in out if len(re.findall(pattern,x)) > 0 or pattern=='' ]
+    print "Processed", out
     if 'noxrd' not in opt : out = [ xrootd+x for x in out ]
     return out
 
@@ -38,19 +39,19 @@ def remotels(locations,pattern='',levels=0) :
         tmpfolders = newfolders
         lev += 1
     
-    files = [] 
+    files = []
     for tmp in tmpfolders :
         try : files.extend(remotels_allpy(tmp,pattern))
         except : continue
 
     return files
 
-def remote_ls_fromids(dataids) :
+def remote_ls_fromids(dataids,pattern='(.root)') :
     
     base = dataids[0]
     ids  = dataids[1]
     locs = [ base + str(i) for i in ids ]
-    return remotels(locs,levels=1,pattern='(.root)')
+    return remotels(locs,levels=1,pattern=pattern)
 
 if __name__ == '__main__' :
 
