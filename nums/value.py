@@ -1,18 +1,17 @@
 ## Author: Luca Pescatore
 ## Mail: pluca@cern.ch
 
-def get_str(num, scale=None, showscale=True, prec=None, otype='shell', showunit = True) :
+def get_str(num, scale=None, showscale=True, prec=None, otype='shell', unit=None, showunit = True, asymm = False) :
         
-        if scale is None : scale = 1
-
-        #ownscale = detect_scale(num)
-        nominal_value = num.nominal_value * 10**scale
-        err = num.std_dev * 10**scale
+        if scale is None : scale = detect_scale(num)
         
+        nominal_value = num.nominal_value * 10**(-scale)
+        err = num.std_dev * 10**(-scale)
+        if asymm: err_asymm = [num.s_Up * 10**(-scale), num.s_Low * 10**(-scale)]
         if prec is None :
             prec = 1
             if abs(err) < 0.5 :
-                prec = abs(self.detect_scale()-scale)
+                prec = abs(detect_scale(num)-scale)
 
         pm    = '+/-'
         times = 'x'
@@ -26,17 +25,17 @@ def get_str(num, scale=None, showscale=True, prec=None, otype='shell', showunit 
         
         out = ("{0:."+str(prec)+"f}").format(nominal_value)
         if err > 0 :
-            out += (" {pm} {0:."+str(prec)+"f}").format(err,pm=pm)
+            if not asymm: out += (" {pm} {0:."+str(prec)+"f}").format(err,pm=pm)
+            else: out += "^{"+("+ {0:."+str(prec)+"f}").format(err_asymm[1])+"}"+"_{"+("- {0:."+str(prec)+"f}").format(err_asymm[0])+"}"
         if scale != 0 and showscale :
             if err > 0 : out = '('+out+')'
             out += ' {times} {exp}'.format(prev=out,times=times,exp=exp)
-        if self.unit is not None and showunit : 
-            out += " "+self.unit 
+        if unit is not None and showunit : 
+            out += " "+unit 
         return wrap+out+wrap
 
 
 def detect_scale(num) :
-
         scale = 0
         err = num.std_dev
         if abs(err) < 1.e-12 :
