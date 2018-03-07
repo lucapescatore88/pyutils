@@ -25,7 +25,7 @@ class PartialFormatter(string.Formatter):
 
         try:
             val=super(PartialFormatter, self).get_field(field_name, args, kwargs)
-        except (KeyError, AttributeError):
+        except (KeyError, AttributeError,IndexError):
             val=None,field_name
         return val
 
