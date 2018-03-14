@@ -14,11 +14,11 @@ loc.LATEX = loc.LHCB+'/latex'
 
 
 # Import submodules
-import processing
-import nums
-import db
-import editing
-import plotting
-import efficiencies
-import scripts
-import LHCb
+#import processing
+#import nums
+#import db
+#import editing
+#import plotting
+#import efficiencies
+#import scripts
+#import LHCb
