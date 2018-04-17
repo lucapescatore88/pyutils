@@ -56,6 +56,7 @@ class LatexDoc :
         self.file.write("\\usepackage{multirow}\n")
        
         self.file.write("\\usepackage{array}\n")
+        self.file.write("\\usepackage{tabularx}\n")
         self.file.write("\\newcolumntype{$}{>{\\global\\let\\currentrowstyle\\relax}}\n")
         self.file.write("\\newcolumntype{^}{>{\\currentrowstyle}}\n")
         self.file.write("\\newcommand{\\rowstyle}[1]{\\gdef\\currentrowstyle{#1}#1\\ignorespaces}\n")
@@ -143,6 +144,18 @@ class LatexDoc :
         if struct : self.insert_line('\\begin{tabular}{'+struct.replace("{","").replace("}","")+'}\\hline')
         self.insert_line(tab+"")
         if struct : self.insert_line('\\hline\n\\end{tabular}')
+        self.insert_line('\\end{center}\n\\end{table}\n')
+
+    def insert_tabularx(self, tab, caption = "", struct = None, width="\\textwidth") :
+
+        if ".txt" in tab[-4:] :
+            tab = open(tab).read()
+
+        self.insert_line('\\begin{table}[hb!]\n\\begin{center}')
+        self.insert_line('\\caption{'+caption+'}')
+        if struct : self.insert_line('\\begin{tabularx}{'+width+'}{'+struct.replace("{","").replace("}","")+'}\\hline')
+        self.insert_line(tab+"")
+        if struct : self.insert_line('\\hline\n\\end{tabularx}')
         self.insert_line('\\end{center}\n\\end{table}\n')
 
     def insert_tabular_from_grid(self, grid, caption = None, has_title = True) :
