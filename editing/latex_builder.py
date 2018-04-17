@@ -99,6 +99,20 @@ class LatexDoc :
             text = open(text).read()
         self.insert_line(text)
 
+    def insert_list(self, elements, sym = None) :
+
+        if len(elements) < 2 :
+            print "Your list has ", len(elements), "elements. Are you sure you want a list?"
+            
+        self.insert_line("\\begin{itemize}")
+        prefix = "\\item"
+        if sym is not None : 
+            if sym in ["circ","cdot","star","ast","rightarrow","diamondsuit"] : sym = "$\\"+sym+"$"
+            prefix += "["+str(sym)+"]"
+        for e in elements :
+            self.insert_line(prefix+" "+str(e))
+        self.insert_line("\\end{itemize}")
+
     def insert_figure(self, fig, width = None, ninrow=1, caption="Caption") :
 
         if width is None : width = 0.9 / ninrow
