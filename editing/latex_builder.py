@@ -32,7 +32,7 @@ class LatexDoc :
     from utils.latex_builder import LatexDoc
 
     latex = latex_doc("output.tex")
-    latex.set_title("My c(ool title")
+    latex.set_title("My cool title")
     latex.add_to_preamble(loc.LATEX+"/preamble.tex") # Standad LHCb preamble provided
     latex.add_to_preamble(loc.LATEX+"/lhcb-symbols-def.tex") # Standad LHCb symbols provided
     latex.insert_line("Inserts some explanation: main text of the latex")
