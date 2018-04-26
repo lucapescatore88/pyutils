@@ -4,14 +4,14 @@
 def get_str(num, scale=None, showscale=True, prec=None, otype='shell', unit=None, showunit = True, asymm = False) :
         
         if scale is None : scale = detect_scale(num)
-        
-        nominal_value = num.nominal_value * 10**(-scale)
-        err = num.std_dev * 10**(-scale)
-        if asymm: err_asymm = [num.s_Up * 10**(-scale), num.s_Low * 10**(-scale)]
+         
+        nominal_value = num.nominal_value * 10.**(-scale)
+        err = num.std_dev * 10.**(-scale)
+        if asymm: err_asymm = [num.s_Up * 10.**(-scale), num.s_Low * 10.**(-scale)]
         if prec is None :
             prec = 1
             if abs(err) < 0.5 :
-                prec = abs(detect_scale(num)-scale)
+                prec = abs(detect_scale(num)-scale)+1
 
         pm    = '+/-'
         times = 'x'
