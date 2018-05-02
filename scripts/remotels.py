@@ -16,7 +16,7 @@ def remotels_simple(location,pattern = '',opt='') :
     out = out.split('\n')
     out = [ x.replace(xrootd,'') for x in out if len(x) > 0 ]
     out = [ x for x in out if len(re.findall(pattern,x)) > 0 or pattern=='' ]
-    print "Processed", out
+    #print ("Processed", out)
     if 'noxrd' not in opt : out = [ xrootd+x for x in out ]
     return out
 
