@@ -1,2 +1,2 @@
-import checkbatch
-import remotels
+import pyutils.scripts.checkbatch
+import pyutils.scripts.remotels
