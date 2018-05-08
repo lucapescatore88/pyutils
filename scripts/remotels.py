@@ -3,6 +3,13 @@ from __future__ import print_function
 import subprocess as sb
 import sys, re, os
 
+try:
+    from XRootD import client
+    from XRootD.client.flags import DirListFlags, OpenFlags, MkDirFlags, QueryCode
+    myclient = client.FileSystem('root://eoslhcb.cern.ch')
+except ImportError: #in case pyxrootd is not available
+    pass
+
 xrootd = 'root://eoslhcb.cern.ch/'
 
 def remotels_simple_py3(location,pattern = '',opt='') :
@@ -23,12 +30,6 @@ def remotels_simple(location,pattern = '',opt='') :
     return out
 
 
-try:
-    from XRootD import client
-    from XRootD.client.flags import DirListFlags, OpenFlags, MkDirFlags, QueryCode
-    myclient = client.FileSystem('root://eoslhcb.cern.ch')
-except ImportError: #in case pyxrootd is not available
-    pass
 
 def remotels_simple_pyxrootd(location,pattern = '',opt='') :
     status, listing = myclient.dirlist(location, DirListFlags.STAT)
@@ -44,8 +45,13 @@ def remotels_simple_pyxrootd(location,pattern = '',opt='') :
 def remotels_allpy(location,pattern='',opt='') :
 
     import sys
-    if sys.version_info.major > 2 : return remotels_simple_py3(location,pattern,opt)
-    else : return remotels_simple(location,pattern,opt)
+    try :
+        assert (myclient is not None)
+        res = remotels_simple_pyxrootd(location,pattern,opt='autoxrootd')
+    except: #if pyxrootd not working
+        if sys.version_info.major > 2 : res = remotels_simple_py3(location,pattern,opt)
+        else : res = remotels_simple(location,pattern,opt)
+    return res
 
 def remotels(locations,pattern='',levels=0, backend='xroot') :
  
@@ -62,7 +68,6 @@ def remotels(locations,pattern='',levels=0, backend='xroot') :
     while lev < levels :
         newfolders = []
         for tmp in tmpfolders :
-            print("NO!!!!")
             try : newfolders.extend(remotels_allpy(tmp,opt='noxrd'))
             except : continue
         tmpfolders = newfolders
@@ -70,10 +75,8 @@ def remotels(locations,pattern='',levels=0, backend='xroot') :
     
     files = [] 
     for tmp in tmpfolders :
-        try : files.extend(remotels_simple_pyxrootd(tmp,pattern,opt='autoxrootd'))
-        except: #if pyxrootd not working
-            try : files.extend(remotels_allpy(tmp,pattern))
-            except : continue
+        try : files.extend(remotels_allpy(tmp,pattern))
+        except : continue
 
     return files
 
