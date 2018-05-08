@@ -13,3 +13,7 @@ export PYUTILS_PROCESSING=$PYUTILSROOT/processing
 # Aliases
 alias addPID='python $PYUTILSROOT/nums/addPID.py'
 alias submit='python $PYUTILSROOT/processing/submit.py'
+
+
+#add pyxrootd
+export PYTHONPATH=$PYTHONPATH:/cvmfs/lhcb.cern.ch/lib/lcg/releases/LCG_87/xrootd_python/0.3.0/x86_64-slc6-gcc49-opt/lib/python2.7/site-packages/
