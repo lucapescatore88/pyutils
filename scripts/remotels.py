@@ -20,7 +20,6 @@ def remotels_simple_py3(location,pattern = '',opt='') :
     if 'noxrd' not in opt : out = [ xrootd+x for x in out ]
     return out
 
-
 def remotels_simple(location,pattern = '',opt='') :
     out = sb.check_output("xrdfs "+xrootd+" ls "+location, shell=True)
     out = out.split('\n')
@@ -28,8 +27,6 @@ def remotels_simple(location,pattern = '',opt='') :
     out = [ x for x in out if len(re.findall(pattern,x)) > 0 or pattern=='' ]
     if 'noxrd' not in opt : out = [ xrootd+x for x in out ]
     return out
-
-
 
 def remotels_simple_pyxrootd(location,pattern = '',opt='') :
     status, listing = myclient.dirlist(location, DirListFlags.STAT)
@@ -40,7 +37,6 @@ def remotels_simple_pyxrootd(location,pattern = '',opt='') :
         opt+='noxrd'
     if 'noxrd' not in opt : out = [ xrootd+x for x in out ]
     return out
-
 
 def remotels_allpy(location,pattern='',opt='') :
 
