@@ -29,7 +29,7 @@ def makeRooArgSet(ll, isArgList=False):
     return returnArgSet
 
 
-def makeRooDataset(tree, vars, helpingVars, datasetName, datasetDescription, weightsName=None, cut=''):
+def makeRooDataset(datasetName, tree, vars, helpingVars=[], datasetDescription=None, weightsName=None, cut=''):
     '''
     vars is a dictionary {varName: (min, max)}
     helpingVars is a list of variables I also want in the dataset but without cuts
@@ -43,6 +43,7 @@ def makeRooDataset(tree, vars, helpingVars, datasetName, datasetDescription, wei
     cuts_vars = ' && '.join(['{0} > {1} && {0} < {2}'.format(var, *spread) for var, spread in vars.items()])
     cut = cut+' && '+cuts_vars if cut != '' and cuts_vars != '' else cut+cuts_vars
 
+    helpingVars = helpingVars[:]
     if weightsName:
         helpingVars.append(weightsName)
     for var in helpingVars:
@@ -54,6 +55,9 @@ def makeRooDataset(tree, vars, helpingVars, datasetName, datasetDescription, wei
     arr = tree2array(tree, branches = vars.keys()+helpingVars, selection=cut)
     tree = array2tree(arr)
 
+    if datasetDescription is None:
+        datasetDescription = datasetName
+
     if weightsName:
         dataSet = r.RooDataSet(datasetName, datasetDescription, tree, dataArgSet, '1', weightsName)
     else:
@@ -62,7 +66,7 @@ def makeRooDataset(tree, vars, helpingVars, datasetName, datasetDescription, wei
 
 
 
-def makeRooMultiDataset(trees, vars, helpingVars, datasetName, datasetDescription, categoryName = 'sample', weightsName=None, cut=''):
+def makeRooMultiDataset(datasetName, trees, vars,  helpingVars=[], datasetDescription=None, categoryName = 'sample', weightsName=None, cut=''):
     '''
     trees is a dictionary with {mode: tree}
     vars is a dictionary {varName: (min, max)}
@@ -73,6 +77,7 @@ def makeRooMultiDataset(trees, vars, helpingVars, datasetName, datasetDescriptio
     for var, spread in vars.items():
         rooVars[var] = r.RooRealVar(var, var, spread[0], spread[1])
 
+    helpingVars = helpingVars[:]
     if weightsName:
         helpingVars.append(weightsName)
     for var in helpingVars:
@@ -85,6 +90,9 @@ def makeRooMultiDataset(trees, vars, helpingVars, datasetName, datasetDescriptio
     for mode, tree in trees.items():
         arr = tree2array(tree, branches = vars.keys()+helpingVars, selection=cut)
         _trees[mode] = array2tree(arr)
+
+    if datasetDescription is None:
+        datasetDescription = datasetName
 
     sample = r.RooCategory(categoryName, categoryName)
     dataSets = {}

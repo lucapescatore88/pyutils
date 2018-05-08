@@ -196,7 +196,7 @@ class MultiPlot:
             if self.rangeX[1] !=  None and self.rangeX[1] < maxX: maxX = self.rangeX[1]
             self.hs.GetXaxis().SetRangeUser(minX,maxX)
             self.hs.Draw(self.DrawOption)
-        if self.drawLegend: self.leg.Draw('same')
+            
         if self.hlines:
             self.lines = {}
             for val in self.hlines:
@@ -224,6 +224,8 @@ class MultiPlot:
                     self.lines2[val].SetLineStyle(self.vlines_styles.get(val, 1))
                 self.lines2[val].SetLineColor(self.vlines_colors.get(val, r.kBlack))
                 self.lines2[val].SetLineWidth(self.vlines_width.get(val, 1))
+
+        if self.drawLegend: self.leg.Draw('same')
 
         if self.stickers:
             for coords, texts in self.stickers.items():
