@@ -4,23 +4,19 @@ import sys, re, os
 def check_jobs(jnames) :
     
     if isinstance(jnames,str) : jnames = [jnames]
-    p = sb.Popen(["bjobs"],stdout=sb.PIPE,stderr=sb.PIPE)
-    out, err = p.communicate() 
-    
-    of = open("test.txt",'w')
-    out = '\n'.join(str(out).split('\\n'))
-    of.write(out)
-    of.close()
+    out = sb.check_output('bjobs -o "JOBID:10 STAT:5 JOB_NAME:40"',shell=True)
+    #p = sb.Popen(['bjobs','-o','"JOBID:10 STAT:5 SUBMIT_TIME:13 JOB_NAME:40"'],stdout=sb.PIPE,stderr=sb.PIPE)
+    #out, err = p.communicate() 
 
     d = {'RUN' : 0, 'PEND' : 0}
     for jname in jnames :
         for l in out.split('\n')[1:] :
             toks = l.split()
-            if len(toks) < 6 : continue 
-   
-            status = toks[2]
-            name   = toks[5]
-
+            if len(toks) < 3 : continue 
+             
+            status = toks[1]
+            name   = toks[2]
+            
             if jname not in name : continue
 
             if status in d.keys() : d[status] += 1
@@ -55,6 +51,6 @@ if __name__ == '__main__' :
     parser.add_argument("-j","--jname",default = None)
     args = parser.parse_args()
 
-    check_jobs(jname)
+    print check_jobs(args.jname)
 
 
