@@ -11,7 +11,6 @@ export PYUTILS_LATEX=$PYUTILSROOT/LHCb/latex
 export PYUTILS_PROCESSING=$PYUTILSROOT/processing
 
 # Aliases
-alias addPID='python $PYUTILSROOT/nums/addPID.py'
 alias submit='python $PYUTILSROOT/processing/submit.py'
 
 
