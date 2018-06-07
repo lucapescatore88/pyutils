@@ -55,7 +55,7 @@ def remotels(locations,pattern='',levels=0, backend='xroot') :
         import glob
         files = []
         for loc in locations :
-            files.extend(glob.glob(loc+"/"+pattern[1:-1].replace(".*?","*")))
+            files.extend(glob.glob(loc+"/"+'*/'*levels+pattern[1:-1].replace(".*?","*")))
         return files
     
     folders = []
