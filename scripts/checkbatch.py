@@ -38,6 +38,8 @@ def is_job_done(name) :
 
 def wait_batch(jobs,callback=None) :       
         
+    if isinstance(jobs, str): jobs=[jobs]
+
     from time import sleep
     done = False
     while not done :
