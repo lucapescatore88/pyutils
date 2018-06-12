@@ -4,23 +4,18 @@ import sys, re, os
 def check_jobs(jnames) :
     
     if isinstance(jnames,str) : jnames = [jnames]
-    p = sb.Popen(["bjobs"],stdout=sb.PIPE,stderr=sb.PIPE)
-    out, err = p.communicate() 
+    out = sb.check_output('bjobs -o "JOBID:10 STAT:5 JOB_NAME:40"',shell=True)
+    if sys.version_info.major >= 3. : out = out.decode('utf-8')
     
-    of = open("test.txt",'w')
-    out = '\n'.join(str(out).split('\\n'))
-    of.write(out)
-    of.close()
-
     d = {'RUN' : 0, 'PEND' : 0}
     for jname in jnames :
         for l in out.split('\n')[1:] :
             toks = l.split()
-            if len(toks) < 6 : continue 
-   
-            status = toks[2]
-            name   = toks[5]
-
+            if len(toks) < 3 : continue 
+             
+            status = toks[1]
+            name   = toks[2]
+            
             if jname not in name : continue
 
             if status in d.keys() : d[status] += 1
@@ -44,9 +39,12 @@ def wait_batch(jobs,callback=None) :
     done = False
     while not done :
         done = True
+        ndone = 0 
         for j in jobs :
-            done *= is_job_done(j)
-        print('\rJobs are running or pending: use "bjobs" to have a look\r')
+            cdone = is_job_done(j)
+            done *= cdone
+            if cdone : ndone += 1
+        print( '\rRunning: %i jobs done over %i\r' % (ndone,len(jobs)) )
         sleep(1)
     if callback is not None : callback();
 
@@ -57,6 +55,6 @@ if __name__ == '__main__' :
     parser.add_argument("-j","--jname",default = None)
     args = parser.parse_args()
 
-    check_jobs(jname)
+    print (check_jobs(args.jname))
 
 
