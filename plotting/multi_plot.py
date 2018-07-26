@@ -46,7 +46,7 @@ class MultiPlot:
     fills = [3003, 3004, 3005, 3006, 3007, 3016, 3020, 3012]*2
     markersA=[20,21,22,23,29,33,34,8]*2
     markersC=[24,25,26,32,30,27,28,4]*2
-    linee = range(1,11)*2
+    linee = list(range(1,11))*2
 
     def __init__(self, name, title='', kind='h', histos={}, labels={}, styles = {}, colors={}, markerStyles={}, markerSizes={}, lineStyles={}, fillHisto={}, fillStyles={}, legPosition = (.80, 0.80, .99, .99), rangeY = [None, None], rangeX = [None, None], autoStyle=True, legMarker=None, drawLegend = True, legTransparent = False, legTextSize=None, hlines = [], vlines = [], hlines_colors ={},  vlines_colors ={}, hlines_styles ={},  vlines_styles ={}, hlines_width ={},  vlines_width ={}, stickers = {}):
         self.kind = kind
