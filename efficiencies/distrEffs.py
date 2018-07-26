@@ -225,7 +225,7 @@ class NTable:
         res.histo = self.histo.copy()
         for coso in self.__dict__:
             if coso not in ['variables', 'edges', 'histo']:
-                exec 'res.{0} = copy.deepcopy(self.{0})'.format(coso)
+                exec ('res.{0} = copy.deepcopy(self.{0})'.format(coso) )
         res.__class__ = self.__class__ # like this I cast the base class to the derived class
         return res
 
